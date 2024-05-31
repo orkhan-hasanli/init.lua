@@ -1,8 +1,18 @@
 
 local local_plugins = {
     {
-        "harpoon",
-        dir = "~/personal/harpoon",
+        "nvim-neotest/nvim-nio"
+    },
+    {
+        'numToStr/Comment.nvim',
+        opts = {
+            -- add any options here
+        },
+        lazy = false,
+    },
+    {
+        "ThePrimeagen/harpoon",
+        branch = "harpoon2",
         config = function()
             local harpoon = require("harpoon")
 

@@ -1,3 +1,15 @@
+local function get_python_path()
+    if vim.env.VIRTUAL_ENV then
+        return vim.env.VIRTUAL_ENV .. '/bin/python'
+    end
+
+    local match = vim.fn.glob(vim.fn.getcwd() .. '/deployable/amplify/src/.venv39/bin/python')
+    if match ~= '' then
+        return match
+    end
+    return 'python'
+end
+
 return {
     "neovim/nvim-lspconfig",
     dependencies = {
@@ -29,6 +41,7 @@ return {
                 "lua_ls",
                 "rust_analyzer",
                 "gopls",
+                "ruff",
             },
             handlers = {
                 function(server_name) -- default handler (optional)
@@ -44,7 +57,7 @@ return {
                         capabilities = capabilities,
                         settings = {
                             Lua = {
-				    runtime = { version = "Lua 5.1" },
+                                runtime = { version = "Lua 5.1" },
                                 diagnostics = {
                                     globals = { "vim", "it", "describe", "before_each", "after_each" },
                                 }
@@ -52,6 +65,106 @@ return {
                         }
                     }
                 end,
+
+                ["ruff"] = function()
+                    local lspconfig = require("lspconfig")
+                    local att_dir = vim.env.ATT
+                    lspconfig.ruff.setup({
+                        capabilities = capabilities,
+                        cmd = { get_python_path(), '-m', 'ruff'}
+                    })
+                end,
+
+                ["pylsp"] = function()
+                    local lspconfig = require("lspconfig")
+                    local att_dir = vim.env.ATT
+                    lspconfig.pylsp.setup({
+                        capabilities = capabilities,
+                        filetypes = {"python"},
+                        settings = {
+                            pylsp = {
+                                plugins = {
+                                    black = { enabled = true },
+                                    autopep8 = { enabled = false },
+                                    yapf = { enabled = false },
+                                    -- linter options
+                                    pylint = { enabled = false, executable = "pylint" },
+                                    pyflakes = { enabled = false },
+                                    pycodestyle = { enabled = false },
+                                    -- type checker
+                                    pylsp_mypy = {
+                                        enabled = true,
+                                        config_sub_paths = {att_dir .. "/build_tools/conf/"}
+                                    },
+                                    -- auto-completion options
+                                    -- jedi_completion = { fuzzy = true },
+                                    -- import sorting
+                                    pyls_isort = { enabled = false },
+                                }
+                            }
+                        },
+                        cmd = { get_python_path(), '-m', 'pylsp'}
+                    })
+                end,
+
+                -- ["pylsp"] = function()
+                --     local lspconfig = require("lspconfig")
+                --     local util = require("lspconfig.util")
+                --
+                --     local att_dir = vim.env.ATT
+                --     local is_within_att = function(fname)
+                --         return att_dir and fname:sub(1, #att_dir) == att_dir
+                --     end
+                --
+                --     local settings = {}
+                --     if is_within_att(vim.fn.getcwd()) then
+                --         settings = {
+                --             pylsp = {
+                --                 configurationSources = { "flake8" },
+                --                 plugins = {
+                --                     flake8 = {
+                --                         config = att_dir .. '/.flake8'
+                --                     },
+                --                     black = {
+                --                         enabled = true,
+                --                         line_length = 120,
+                --                     },
+                --                 },
+                --             }
+                --         }
+                --     else
+                --         settings = {
+                --             pylsp = {
+                --                 configurationSources = { "flake8" },
+                --                 plugins = {
+                --                     flake8 = {},
+                --                     black = {
+                --                         enabled = true,
+                --                         line_length = 120,
+                --                     },
+                --                 },
+                --             }
+                --         }
+                --     end
+                --
+                --     lspconfig.pylsp.setup {
+                --         capabilities = capabilities,
+                --         root_dir = function(fname)
+                --             if is_within_att(fname) then
+                --                 return util.root_pattern(unpack({
+                --                     './build-tools/conf/mypy.ini',
+                --                     './build-tools/setup.py',
+                --                     './build-tools/setup.cfg',
+                --                     './build-tools/requirements.txt',
+                --                     './build-tools/dependencies.txt',
+                --                 }))(fname) or util.find_git_ancestor(fname)
+                --             else
+                --                 return util.find_git_ancestor(fname)
+                --             end
+                --         end,
+                --         settings = settings,
+            --         }
+            --     end,
             }
         })
 
@@ -90,3 +203,4 @@ return {
         })
     end
 }
+
