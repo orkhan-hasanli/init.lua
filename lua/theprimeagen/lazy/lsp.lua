@@ -1,3 +1,31 @@
+<<<<<<< Updated upstream
+=======
+local function get_python_path()
+    if vim.env.VIRTUAL_ENV then
+        return vim.env.VIRTUAL_ENV .. '/bin/python'
+    end
+
+    local match = vim.fn.glob(vim.fn.getcwd() .. '/deployable/amplify/src/.venv39/bin/python')
+    if match ~= '' then
+        return match
+    end
+    return 'python'
+end
+
+
+vim.api.nvim_create_autocmd('FileType', {
+    pattern = 'python',
+    callback = function()
+        vim.lsp.start({
+            name = 'pypls',
+            cmd = {"pypls", "--server", "--use-socket"},
+        })
+    end,
+})
+
+
+
+>>>>>>> Stashed changes
 return {
     "neovim/nvim-lspconfig",
     dependencies = {
@@ -52,7 +80,29 @@ return {
                         }
                     }
                 end,
+<<<<<<< Updated upstream
             }
+=======
+
+                ["pylyzer"] = function()
+                    local lspconfig = require("lspconfig")
+
+                    lspconfig.pylyzer.setup{
+                        name = "pylyzer",
+                        cmd = { "pylyzer", "--server" },
+                        filetypes = { "python" },
+                        root_dir = function() return vim.env.ATT end,
+                    }
+                end,
+
+                ["ruff"] = function()
+                    local lspconfig = require("lspconfig")
+                    lspconfig.ruff.setup({
+                        capabilities = capabilities,
+                    })
+                end,
+           }
+>>>>>>> Stashed changes
         })
 
         local cmp_select = { behavior = cmp.SelectBehavior.Select }
